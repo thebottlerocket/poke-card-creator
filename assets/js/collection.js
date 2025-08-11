@@ -93,6 +93,11 @@ function displayCards(cards) {
                     <span>Types: ${formatTypes(card.type1, card.type2)}</span>
                     <span>ATK: ${card.attack || 40} | DEF: ${card.defense || 30}</span>
                 </div>
+                ${card.weakness || card.resistance ? `<div class="card-meta effectiveness-info" style="font-size: 0.8em; color: #666;">
+                    ${card.weakness ? `<span>Weak: ${getTypeEmoji(card.weakness)} ${card.weakness}</span>` : ''}
+                    ${card.weakness && card.resistance ? ' | ' : ''}
+                    ${card.resistance ? `<span>Resist: ${getTypeEmoji(card.resistance)} ${card.resistance}</span>` : ''}
+                </div>` : ''}
                 <div class="card-actions">
                     <button class="edit-btn" onclick="editCardInCreator(${index})" style="background: linear-gradient(135deg, #ff9800, #f57c00); color: white;">✏️ Edit</button>
                     <button class="view-btn" onclick="viewCard(${index})">👁️ View</button>
@@ -136,6 +141,27 @@ function formatTypes(type1, type2) {
         result += ' • ' + typeEmojis[type2] + ' ' + type2;
     }
     return result;
+}
+
+// Get type emoji for individual types
+function getTypeEmoji(type) {
+    const typeEmojis = {
+        'Normal': '⭕',
+        'Electric': '⚡',
+        'Fire': '🔥',
+        'Water': '💧',
+        'Grass': '🌱',
+        'Ground': '🌍',
+        'Rock': '🪨',
+        'Flying': '🪶',
+        'Fighting': '👊',
+        'Psychic': '🔮',
+        'Dark': '🌙',
+        'Steel': '⚔️',
+        'Dragon': '🐉',
+        'Fairy': '🧚'
+    };
+    return typeEmojis[type] || '❓';
 }
 
 // Format date for display

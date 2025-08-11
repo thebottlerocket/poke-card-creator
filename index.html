@@ -31,8 +31,9 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="cardAuthor">Card Author:</label>
-                    <input type="text" id="cardAuthor" placeholder="Enter your name" value="">
+                    <label for="cardAuthor">Card Author: <span style="color: red;">*</span></label>
+                    <input type="text" id="cardAuthor" placeholder="Enter your name" value="" required>
+                    <small>Required: Your name will appear on the card</small>
                 </div>
                 
                 <div class="form-group">
@@ -112,6 +113,49 @@
                 </div>
                 
                 <div class="form-group">
+                    <label for="weakness">Weakness (Takes +20 damage from):</label>
+                    <select id="weakness">
+                        <option value="">None</option>
+                        <option value="Normal">⭕ Normal</option>
+                        <option value="Electric">⚡ Electric</option>
+                        <option value="Fire">🔥 Fire</option>
+                        <option value="Water">💧 Water</option>
+                        <option value="Grass">🌱 Grass</option>
+                        <option value="Ground">🌍 Ground</option>
+                        <option value="Rock">🪨 Rock</option>
+                        <option value="Flying">🪶 Flying</option>
+                        <option value="Fighting">👊 Fighting</option>
+                        <option value="Psychic">🔮 Psychic</option>
+                        <option value="Dark">🌙 Dark</option>
+                        <option value="Steel">⚔️ Steel</option>
+                        <option value="Dragon">🐉 Dragon</option>
+                        <option value="Fairy">🧚 Fairy</option>
+                    </select>
+                    <button type="button" class="button" onclick="suggestTypeEffectiveness(document.getElementById('pokemonType').value)" style="background: #9c27b0; margin-left: 10px; padding: 5px 10px; font-size: 12px;">🎯 Auto-Suggest</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="resistance">Resistance (Takes -20 damage from):</label>
+                    <select id="resistance">
+                        <option value="">None</option>
+                        <option value="Normal">⭕ Normal</option>
+                        <option value="Electric">⚡ Electric</option>
+                        <option value="Fire">🔥 Fire</option>
+                        <option value="Water">💧 Water</option>
+                        <option value="Grass">🌱 Grass</option>
+                        <option value="Ground">🌍 Ground</option>
+                        <option value="Rock">🪨 Rock</option>
+                        <option value="Flying">🪶 Flying</option>
+                        <option value="Fighting">👊 Fighting</option>
+                        <option value="Psychic">🔮 Psychic</option>
+                        <option value="Dark">🌙 Dark</option>
+                        <option value="Steel">⚔️ Steel</option>
+                        <option value="Dragon">🐉 Dragon</option>
+                        <option value="Fairy">🧚 Fairy</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
                     <label for="abilityName">Special Ability Name:</label>
                     <input type="text" id="abilityName" placeholder="Thunder Shock" value="Thunder Shock">
                 </div>
@@ -122,6 +166,7 @@
                 </div>
                 
                 <button class="button" onclick="saveCard()" style="background: #4caf50;">💾 Save Pokemon Card</button>
+                <button class="button" onclick="checkStorageStatus()" style="background: #2196f3; margin-left: 10px;">🔍 Check Storage</button>
             </div>
             
             <div class="card-preview" id="pokemonCard">
@@ -147,8 +192,11 @@
                         <span>Retreat: ⚡</span>
                     </div>
                     <div class="weakness-resistance">
-                        <div class="weakness">
-                            <span>Weakness: 🌍 ×2</span>
+                        <div class="weakness" id="cardWeakness" style="display: none;">
+                            <span>Weakness: <span id="cardWeaknessType"></span> +20</span>
+                        </div>
+                        <div class="resistance" id="cardResistance" style="display: none;">
+                            <span>Resistance: <span id="cardResistanceType"></span> -20</span>
                         </div>
                     </div>
                 </div>

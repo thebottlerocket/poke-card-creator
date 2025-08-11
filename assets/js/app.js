@@ -538,18 +538,234 @@ function getTypeIcon(type) {
     return icons[type] || '❓';
 }
 
+// Type effectiveness chart - weaknesses and resistances based on Pokemon types
+function getTypeEffectiveness() {
+    return {
+        'Normal': { weakTo: ['Fighting'], resistantTo: [] },
+        'Electric': { weakTo: ['Ground'], resistantTo: ['Flying', 'Steel', 'Electric'] },
+        'Fire': { weakTo: ['Water', 'Ground', 'Rock'], resistantTo: ['Fire', 'Grass', 'Steel', 'Fairy'] },
+        'Water': { weakTo: ['Electric', 'Grass'], resistantTo: ['Fire', 'Water', 'Steel'] },
+        'Grass': { weakTo: ['Fire', 'Flying', 'Rock'], resistantTo: ['Water', 'Electric', 'Grass', 'Ground'] },
+        'Ground': { weakTo: ['Water', 'Grass'], resistantTo: ['Electric', 'Rock'] },
+        'Rock': { weakTo: ['Water', 'Grass', 'Fighting', 'Ground', 'Steel'], resistantTo: ['Normal', 'Fire', 'Flying'] },
+        'Flying': { weakTo: ['Electric', 'Rock'], resistantTo: ['Grass', 'Fighting', 'Ground'] },
+        'Fighting': { weakTo: ['Flying', 'Psychic', 'Fairy'], resistantTo: ['Rock', 'Dark'] },
+        'Psychic': { weakTo: ['Dark'], resistantTo: ['Fighting', 'Psychic'] },
+        'Dark': { weakTo: ['Fighting', 'Fairy'], resistantTo: ['Dark', 'Psychic'] },
+        'Steel': { weakTo: ['Fire', 'Fighting', 'Ground'], resistantTo: ['Normal', 'Flying', 'Rock', 'Steel', 'Grass', 'Psychic', 'Fairy', 'Dragon'] },
+        'Dragon': { weakTo: ['Fairy', 'Dragon'], resistantTo: ['Fire', 'Water', 'Electric', 'Grass'] },
+        'Fairy': { weakTo: ['Steel'], resistantTo: ['Fighting', 'Dark', 'Dragon'] }
+    };
+}
+
+// Auto-suggest weakness and resistance based on primary type
+function suggestTypeEffectiveness(primaryType) {
+    const effectiveness = getTypeEffectiveness();
+    const typeData = effectiveness[primaryType];
+    
+    if (typeData) {
+        // Suggest a random weakness from the type's weaknesses
+        if (typeData.weakTo && typeData.weakTo.length > 0) {
+            const randomWeakness = typeData.weakTo[Math.floor(Math.random() * typeData.weakTo.length)];
+            document.getElementById('weakness').value = randomWeakness;
+        }
+        
+        // Suggest a random resistance from the type's resistances
+        if (typeData.resistantTo && typeData.resistantTo.length > 0) {
+            const randomResistance = typeData.resistantTo[Math.floor(Math.random() * typeData.resistantTo.length)];
+            document.getElementById('resistance').value = randomResistance;
+        }
+        
+        // Update card preview
+        updateCard();
+    }
+}
+
+// Show validation message to user
+function showTypeValidationMessage(message) {
+    // Remove existing validation message
+    const existingMessage = document.getElementById('typeValidationMessage');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Create new validation message
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'typeValidationMessage';
+    messageDiv.style.cssText = `
+        background: #ff4444;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: fadeIn 0.3s ease-in;
+    `;
+    messageDiv.innerHTML = `⚠️ ${message}`;
+    
+    // Insert after the secondary type field
+    const secondaryTypeField = document.getElementById('pokemonType2').parentElement;
+    secondaryTypeField.parentNode.insertBefore(messageDiv, secondaryTypeField.nextSibling);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (document.getElementById('typeValidationMessage')) {
+            messageDiv.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => messageDiv.remove(), 300);
+        }
+    }, 3000);
+}
+
+// Validate author field
+function validateAuthor() {
+    const author = document.getElementById('cardAuthor').value.trim();
+    
+    if (!author) {
+        showAuthorValidationMessage('Author name is required! Please enter your name.');
+        return false;
+    }
+    
+    return true;
+}
+
+// Show author validation message to user
+function showAuthorValidationMessage(message) {
+    // Remove existing validation message
+    const existingMessage = document.getElementById('authorValidationMessage');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Create new validation message
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'authorValidationMessage';
+    messageDiv.style.cssText = `
+        background: #ff4444;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: fadeIn 0.3s ease-in;
+    `;
+    messageDiv.innerHTML = `⚠️ ${message}`;
+    
+    // Insert after the author field
+    const authorField = document.getElementById('cardAuthor').parentElement;
+    authorField.parentNode.insertBefore(messageDiv, authorField.nextSibling);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (document.getElementById('authorValidationMessage')) {
+            messageDiv.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => messageDiv.remove(), 300);
+        }
+    }, 3000);
+}
+
+// Validate weakness and resistance selections
+function validateEffectiveness() {
+    const type1 = document.getElementById('pokemonType').value;
+    const type2 = document.getElementById('pokemonType2').value;
+    const weakness = document.getElementById('weakness').value;
+    const resistance = document.getElementById('resistance').value;
+    
+    // Check if weakness and resistance are the same
+    if (weakness && resistance && weakness === resistance) {
+        document.getElementById('resistance').value = '';
+        showTypeValidationMessage('Pokemon cannot be weak and resistant to the same type!');
+        updateCard();
+        return false;
+    }
+    
+    // Check if weakness is same as Pokemon's own types
+    if (weakness && (weakness === type1 || (type2 && weakness === type2))) {
+        document.getElementById('weakness').value = '';
+        showTypeValidationMessage('Pokemon cannot be weak to its own type!');
+        updateCard();
+        return false;
+    }
+    
+    // Check if resistance is same as Pokemon's own types  
+    if (resistance && (resistance === type1 || (type2 && resistance === type2))) {
+        document.getElementById('resistance').value = '';
+        showTypeValidationMessage('Pokemon cannot resist its own type!');
+        updateCard();
+        return false;
+    }
+    
+    return true;
+}
+
+// Manual storage check and restore function
+async function checkStorageStatus() {
+    try {
+        if (window.cardManager) {
+            // Reset session flags to allow fresh restore/migration if needed
+            sessionStorage.removeItem('restoreAttempted');
+            sessionStorage.removeItem('migrationAttempted');
+            
+            await window.cardManager.debugStorageStatus();
+            await window.cardManager.restoreFromLocalStorageIfNeeded();
+            await window.cardManager.migrateFromLocalStorage();
+            await displayCollection();
+            
+            // Show success message
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #4caf50;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 5px;
+                z-index: 1000;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            `;
+            messageDiv.innerHTML = '✅ Storage checked and synchronized! See console for details.';
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => messageDiv.remove(), 3000);
+        } else {
+            alert('Card manager not available. Check browser console for details.');
+        }
+    } catch (error) {
+        console.error('Storage check error:', error);
+        alert('Error checking storage: ' + error.message);
+    }
+}
+
 // Update card preview in real-time
 function updateCard() {
     const name = document.getElementById('pokemonName').value || 'Unknown Pokemon';
-    const author = document.getElementById('cardAuthor').value || 'Unknown';
+    const author = document.getElementById('cardAuthor').value;
     const type1 = document.getElementById('pokemonType').value;
-    const type2 = document.getElementById('pokemonType2').value;
+    let type2 = document.getElementById('pokemonType2').value;
     const description = document.getElementById('pokemonDescription').value || 'A mysterious Pokemon';
     const hp = document.getElementById('hp').value || 0;
     const attack = document.getElementById('attack').value || 0;
     const defense = document.getElementById('defense').value || 0;
     const abilityName = document.getElementById('abilityName').value || 'Special Ability';
     const abilityDescription = document.getElementById('abilityDescription').value || 'An amazing ability!';
+    const weakness = document.getElementById('weakness').value;
+    const resistance = document.getElementById('resistance').value;
+    
+    // Validate author field
+    validateAuthor(author);
+    
+    // Validate duplicate types - if same type is selected for both, ignore secondary
+    if (type1 && type2 && type1 === type2) {
+        type2 = '';
+        document.getElementById('pokemonType2').value = '';
+        showTypeValidationMessage('Duplicate type detected! Pokemon can\'t have the same type twice.');
+    }
     
     // Update preview
     document.getElementById('cardName').textContent = name;
@@ -559,7 +775,14 @@ function updateCard() {
     document.getElementById('cardDefense').textContent = defense;
     document.getElementById('cardAbilityName').textContent = abilityName;
     document.getElementById('cardAbilityDescription').textContent = abilityDescription;
-    document.getElementById('cardAuthorName').textContent = author;
+    // Validate author first
+    if (!validateAuthor()) {
+        document.getElementById('cardAuthorName').textContent = 'Author Required';
+        document.getElementById('cardAuthorName').style.color = '#ff4444';
+    } else {
+        document.getElementById('cardAuthorName').textContent = author;
+        document.getElementById('cardAuthorName').style.color = '';
+    }
     
     // Update types display
     let typesText = getTypeIcon(type1) + ' ' + type1;
@@ -567,25 +790,61 @@ function updateCard() {
         typesText += ' | ' + getTypeIcon(type2) + ' ' + type2;
     }
     document.getElementById('cardTypes').textContent = typesText;
+    
+    // Update weakness display
+    const weaknessElement = document.getElementById('cardWeakness');
+    const weaknessTypeElement = document.getElementById('cardWeaknessType');
+    if (weakness) {
+        weaknessTypeElement.textContent = getTypeIcon(weakness) + ' ' + weakness;
+        weaknessElement.style.display = 'block';
+    } else {
+        weaknessElement.style.display = 'none';
+    }
+    
+    // Update resistance display
+    const resistanceElement = document.getElementById('cardResistance');
+    const resistanceTypeElement = document.getElementById('cardResistanceType');
+    if (resistance) {
+        resistanceTypeElement.textContent = getTypeIcon(resistance) + ' ' + resistance;
+        resistanceElement.style.display = 'block';
+    } else {
+        resistanceElement.style.display = 'none';
+    }
 }
 
 // Save card to collection
 async function saveCard() {
+    // Validate author before saving
+    if (!validateAuthor()) {
+        alert('❌ Please enter your name as the author before saving!');
+        return;
+    }
+    
     if (window.cardManager) {
         await window.cardManager.saveCard();
     } else {
         // Fallback to old method
+        let type1 = document.getElementById('pokemonType').value;
+        let type2 = document.getElementById('pokemonType2').value;
+        
+        // Prevent duplicate types
+        if (type1 && type2 && type1 === type2) {
+            type2 = '';
+        }
+        
         const cardData = {
             id: Date.now(),
             createdAt: new Date().toISOString(),
             name: document.getElementById('pokemonName').value || 'Unknown Pokemon',
-            author: document.getElementById('cardAuthor').value || 'Unknown',
-            type1: document.getElementById('pokemonType').value,
-            type2: document.getElementById('pokemonType2').value,
+            author: document.getElementById('cardAuthor').value,
+            type1: type1,
+            type2: type2,
             description: document.getElementById('pokemonDescription').value || 'A mysterious Pokemon',
             hp: document.getElementById('hp').value || 0,
             attack: document.getElementById('attack').value || 0,
             defense: document.getElementById('defense').value || 0,
+            weakness: document.getElementById('weakness').value || '',
+            resistance: document.getElementById('resistance').value || '',
             abilityName: document.getElementById('abilityName').value || 'Special Ability',
             abilityDescription: document.getElementById('abilityDescription').value || 'An amazing ability!',
             image: window.currentCardImage
@@ -645,6 +904,11 @@ async function displayCollection() {
             <div class="stats-mini">
                 HP: ${card.hp} | ATK: ${card.attack} | DEF: ${card.defense}
             </div>
+            ${card.weakness || card.resistance ? `<div class="effectiveness-mini" style="font-size: 0.8em; margin: 5px 0; color: #666;">
+                ${card.weakness ? `Weak: ${getTypeIcon(card.weakness)} ${card.weakness}` : ''}
+                ${card.weakness && card.resistance ? ' | ' : ''}
+                ${card.resistance ? `Resist: ${getTypeIcon(card.resistance)} ${card.resistance}` : ''}
+            </div>` : ''}
             <div class="card-actions" style="display: flex; gap: 5px; margin-top: 10px;">
                 <button class="edit-button" onclick="editCardByIndex(${index})" style="background: #ff9800; color: white; border: none; padding: 5px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; flex: 1;">✏️ Edit</button>
                 <button class="delete-button" onclick="deleteCardByIndex(${index})" style="background: #ff4444; color: white; border: none; padding: 5px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; flex: 1;">🗑️ Delete</button>
@@ -869,6 +1133,8 @@ function populateFormWithCard(card) {
     document.getElementById('hp').value = card.hp || 60;
     document.getElementById('attack').value = card.attack || 40;
     document.getElementById('defense').value = card.defense || 30;
+    document.getElementById('weakness').value = card.weakness || '';
+    document.getElementById('resistance').value = card.resistance || '';
     document.getElementById('abilityName').value = card.abilityName || '';
     document.getElementById('abilityDescription').value = card.abilityDescription || '';
     
@@ -922,6 +1188,12 @@ function updateCardManual() {
         return;
     }
     
+    // Validate author before updating
+    if (!validateAuthor()) {
+        alert('❌ Please enter your name as the author before updating!');
+        return;
+    }
+    
     const cards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
     const cardIndex = window.currentEditingCardIndex;
     
@@ -930,7 +1202,7 @@ function updateCardManual() {
         cards[cardIndex] = {
             ...cards[cardIndex],
             name: document.getElementById('pokemonName').value || 'Unknown Pokemon',
-            author: document.getElementById('cardAuthor').value || 'Unknown',
+            author: document.getElementById('cardAuthor').value,
             type1: document.getElementById('pokemonType').value,
             type2: document.getElementById('pokemonType2').value,
             description: document.getElementById('pokemonDescription').value || 'A mysterious Pokemon',
@@ -1036,12 +1308,30 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
     
-    const inputs = ['pokemonName', 'cardAuthor', 'pokemonType', 'pokemonType2', 'pokemonDescription', 'hp', 'attack', 'defense', 'abilityName', 'abilityDescription'];
+    const inputs = ['pokemonName', 'cardAuthor', 'pokemonType', 'pokemonType2', 'pokemonDescription', 'hp', 'attack', 'defense', 'weakness', 'resistance', 'abilityName', 'abilityDescription'];
     inputs.forEach(id => {
         const element = document.getElementById(id);
         if (element) {
             element.addEventListener('input', updateCard);
             element.addEventListener('change', updateCard);
+            
+            // Add specific validation for weakness and resistance
+            if (id === 'weakness' || id === 'resistance') {
+                element.addEventListener('change', validateEffectiveness);
+            }
+            
+            // Add specific validation for author
+            if (id === 'cardAuthor') {
+                element.addEventListener('input', function() {
+                    // Clear validation message when user starts typing and field becomes valid
+                    if (this.value.trim()) {
+                        const existingMessage = document.getElementById('authorValidationMessage');
+                        if (existingMessage) {
+                            existingMessage.remove();
+                        }
+                    }
+                });
+            }
         }
     });
     
@@ -1057,6 +1347,22 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Save OpenAI API key when changed
     document.getElementById('openaiApiKey').addEventListener('input', function() {
         localStorage.setItem('openaiApiKey', this.value);
+    });
+    
+    // Add type effectiveness suggestions when primary type changes
+    document.getElementById('pokemonType').addEventListener('change', function() {
+        const selectedType = this.value;
+        if (selectedType) {
+            suggestTypeEffectiveness(selectedType);
+        }
+        // Validate existing effectiveness selections
+        validateEffectiveness();
+    });
+    
+    // Add validation when secondary type changes
+    document.getElementById('pokemonType2').addEventListener('change', function() {
+        // Validate existing effectiveness selections
+        validateEffectiveness();
     });
     
     // Initial update and load collection
@@ -1110,11 +1416,17 @@ async function updateCardFromCollection() {
         return;
     }
     
+    // Validate author before updating
+    if (!validateAuthor()) {
+        alert('❌ Please enter your name as the author before updating!');
+        return;
+    }
+    
     try {
         const updatedCardData = {
             ...window.currentEditingCard,
             name: document.getElementById('pokemonName').value || 'Unknown Pokemon',
-            author: document.getElementById('cardAuthor').value || 'Unknown',
+            author: document.getElementById('cardAuthor').value,
             type1: document.getElementById('pokemonType').value,
             type2: document.getElementById('pokemonType2').value,
             description: document.getElementById('pokemonDescription').value || 'A mysterious Pokemon',

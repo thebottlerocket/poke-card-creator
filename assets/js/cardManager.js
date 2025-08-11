@@ -12,7 +12,16 @@ class CardManager {
         try {
             await window.pokemonDB.init();
             console.log('Card Manager initialized with IndexedDB');
+            
+            // Debug: Check both storage systems
+            await this.debugStorageStatus();
+            
+            // First, try to restore from localStorage if IndexedDB is empty
+            await this.restoreFromLocalStorageIfNeeded();
+            
+            // Then migrate any new localStorage data
             await this.migrateFromLocalStorage();
+            
             return true;
         } catch (error) {
             console.error('Failed to initialize database, falling back to localStorage:', error);
@@ -20,24 +29,67 @@ class CardManager {
         }
     }
 
-    // Migrate existing localStorage data to IndexedDB
+    // Debug function to check storage status
+    async debugStorageStatus() {
+        try {
+            console.log('=== Storage Debug Info ===');
+            
+            // Check localStorage
+            const localCards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+            console.log(`localStorage cards: ${localCards.length}`);
+            
+            // Check IndexedDB
+            const indexedCards = await window.pokemonDB.getAllCards();
+            console.log(`IndexedDB cards: ${indexedCards.length}`);
+            
+            // Check origin and persistence
+            console.log(`Current origin: ${window.location.origin}`);
+            console.log(`Local storage available: ${typeof(Storage) !== "undefined"}`);
+            console.log(`IndexedDB available: ${typeof(indexedDB) !== "undefined"}`);
+            
+            // Check if persistent storage is available
+            if (navigator.storage && navigator.storage.persist) {
+                const persistent = await navigator.storage.persist();
+                console.log(`Persistent storage: ${persistent}`);
+            }
+            
+            console.log('=== End Storage Debug ===');
+        } catch (error) {
+            console.error('Debug storage error:', error);
+        }
+    }
+
+    // Migrate existing localStorage data to IndexedDB (only once per session)
     async migrateFromLocalStorage() {
         try {
+            // Check if we've already done migration this session
+            if (sessionStorage.getItem('migrationAttempted')) {
+                console.log('Migration already attempted this session, skipping...');
+                return;
+            }
+            
             const existingCards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
-            if (existingCards.length > 0) {
+            const indexedCards = await window.pokemonDB.getAllCards();
+            
+            // Only migrate if localStorage has different/more cards than IndexedDB
+            if (existingCards.length > 0 && existingCards.length !== indexedCards.length) {
                 console.log(`Migrating ${existingCards.length} cards from localStorage to IndexedDB...`);
                 
                 for (const card of existingCards) {
-                    await window.pokemonDB.saveCard(card);
+                    // Check if card already exists to avoid duplicates
+                    const existingCard = await window.pokemonDB.getCard(card.id);
+                    if (!existingCard) {
+                        await window.pokemonDB.saveCard(card);
+                    }
                 }
                 
-                // Clear localStorage after successful migration
-                localStorage.removeItem('pokemonCards');
-                console.log('Migration completed successfully');
-                
-                // Show migration success message
+                console.log('Migration completed successfully - localStorage kept as backup');
                 this.showNotification('✅ Cards migrated to improved storage system!', 'success');
             }
+            
+            // Mark that we've attempted migration this session
+            sessionStorage.setItem('migrationAttempted', 'true');
+            
         } catch (error) {
             console.error('Migration error:', error);
         }
@@ -62,12 +114,58 @@ class CardManager {
                 this.clearForm();
             }
             
+            // ALWAYS save to localStorage as backup
+            await this.saveToLocalStorageBackup();
+            
             // Refresh displays
             await this.refreshCollectionDisplay();
             
         } catch (error) {
             console.error('Error saving card:', error);
             this.showNotification('❌ Error saving card. Please try again.', 'error');
+        }
+    }
+
+    // Always maintain localStorage backup
+    async saveToLocalStorageBackup() {
+        try {
+            const allCards = await window.pokemonDB.getAllCards();
+            localStorage.setItem('pokemonCards', JSON.stringify(allCards));
+            console.log(`Backup: Saved ${allCards.length} cards to localStorage`);
+        } catch (error) {
+            console.error('Error creating localStorage backup:', error);
+        }
+    }
+
+    // Restore cards from localStorage if IndexedDB is empty (only run once per session)
+    async restoreFromLocalStorageIfNeeded() {
+        try {
+            // Check if we've already done a restore this session
+            if (sessionStorage.getItem('restoreAttempted')) {
+                console.log('Restore already attempted this session, skipping...');
+                return;
+            }
+            
+            const indexedCards = await window.pokemonDB.getAllCards();
+            const localCards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+            
+            // Only restore if IndexedDB is completely empty but localStorage has cards
+            if (indexedCards.length === 0 && localCards.length > 0) {
+                console.log(`Restoring ${localCards.length} cards from localStorage backup...`);
+                
+                for (const card of localCards) {
+                    await window.pokemonDB.saveCard(card);
+                }
+                
+                this.showNotification('🔄 Cards restored from backup!', 'success');
+                console.log('Cards successfully restored from localStorage backup');
+            }
+            
+            // Mark that we've attempted restore this session
+            sessionStorage.setItem('restoreAttempted', 'true');
+            
+        } catch (error) {
+            console.error('Error restoring from localStorage:', error);
         }
     }
 
@@ -111,6 +209,10 @@ class CardManager {
             if (!confirmed) return;
 
             await window.pokemonDB.deleteCard(cardId);
+            
+            // IMPORTANT: Update localStorage backup to reflect deletion
+            await this.saveToLocalStorageBackup();
+            
             this.showNotification(`🗑️ "${card.name}" deleted successfully!`, 'success');
             
             // Refresh displays
@@ -220,15 +322,25 @@ class CardManager {
 
     // Helper methods
     getCardDataFromForm() {
+        let type1 = document.getElementById('pokemonType').value;
+        let type2 = document.getElementById('pokemonType2').value;
+        
+        // Prevent duplicate types
+        if (type1 && type2 && type1 === type2) {
+            type2 = '';
+        }
+        
         return {
             name: document.getElementById('pokemonName').value || 'Unknown Pokemon',
             author: document.getElementById('cardAuthor').value || 'Unknown',
-            type1: document.getElementById('pokemonType').value,
-            type2: document.getElementById('pokemonType2').value,
+            type1: type1,
+            type2: type2,
             description: document.getElementById('pokemonDescription').value || 'A mysterious Pokemon',
             hp: parseInt(document.getElementById('hp').value) || 60,
             attack: parseInt(document.getElementById('attack').value) || 40,
             defense: parseInt(document.getElementById('defense').value) || 30,
+            weakness: document.getElementById('weakness').value || '',
+            resistance: document.getElementById('resistance').value || '',
             abilityName: document.getElementById('abilityName').value || 'Special Ability',
             abilityDescription: document.getElementById('abilityDescription').value || 'An amazing ability!',
             image: window.currentCardImage
@@ -244,6 +356,8 @@ class CardManager {
         document.getElementById('hp').value = card.hp || 60;
         document.getElementById('attack').value = card.attack || 40;
         document.getElementById('defense').value = card.defense || 30;
+        document.getElementById('weakness').value = card.weakness || '';
+        document.getElementById('resistance').value = card.resistance || '';
         document.getElementById('abilityName').value = card.abilityName || '';
         document.getElementById('abilityDescription').value = card.abilityDescription || '';
         
