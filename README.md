@@ -80,7 +80,7 @@ poke-card-creator/
 - **Share the Fun**: Export your collection to share with friends and family
 - **Keep Adding**: There's no limit to how many awesome Pokemon you can create!
 
-## Cool AI Features (The Robot Artists!)
+## Art
 
 **We LOVE your own artwork!** The best Pokemon cards come from YOUR imagination and creativity! Here are all your options:
 

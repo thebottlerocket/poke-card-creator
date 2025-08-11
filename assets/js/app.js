@@ -4,39 +4,134 @@ window.currentCardImage = null;
 
 // Helper function to resize and display image in the card
 function resizeAndDisplayImage(imageSource, isBase64 = false) {
+    // Store original image for refitting
+    if (!window.originalImageData && isBase64) {
+        window.originalImageData = imageSource;
+    }
+    
+    // Use the enhanced version with smart crop as default
+    return resizeAndDisplayImageWithMode(imageSource, isBase64, 'smart');
+}
+
+// Alternative image fitting - for when users want different cropping
+function refitCurrentImage() {
+    if (!window.currentCardImage) {
+        alert('❌ No image to refit! Please upload an image first.');
+        return;
+    }
+    
+    const fitModes = ['smart', 'center', 'top', 'contain'];
+    const currentMode = window.currentImageFitMode || 'smart';
+    const currentIndex = fitModes.indexOf(currentMode);
+    const nextMode = fitModes[(currentIndex + 1) % fitModes.length];
+    
+    window.currentImageFitMode = nextMode;
+    
+    // Store original image if not already stored
+    if (!window.originalImageData) {
+        window.originalImageData = window.currentCardImage;
+    }
+    
+    resizeAndDisplayImageWithMode(window.originalImageData, true, nextMode);
+    
+    const modeNames = {
+        'smart': 'Smart Crop (best for subjects)',
+        'center': 'Center Crop (balanced)',
+        'top': 'Top Focus (good for faces)', 
+        'contain': 'Fit All (may add borders)'
+    };
+    
+    alert(`📸 Image refit to: ${modeNames[nextMode]}`);
+}
+
+// Enhanced image resize with different fitting modes
+function resizeAndDisplayImageWithMode(imageSource, isBase64 = false, fitMode = 'smart') {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = function() {
-            // Create a canvas to resize the image
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Set canvas size to match the card image area (200px x 120px from CSS)
             const targetWidth = 200;
             const targetHeight = 120;
             canvas.width = targetWidth;
             canvas.height = targetHeight;
             
-            // Calculate scaling to maintain aspect ratio while filling the area
-            const scale = Math.max(targetWidth / img.width, targetHeight / img.height);
-            const scaledWidth = img.width * scale;
-            const scaledHeight = img.height * scale;
+            const imgAspect = img.width / img.height;
+            const targetAspect = targetWidth / targetHeight;
             
-            // Center the image
-            const offsetX = (targetWidth - scaledWidth) / 2;
-            const offsetY = (targetHeight - scaledHeight) / 2;
+            let drawWidth, drawHeight, offsetX, offsetY;
             
-            // Fill background with a subtle color
+            // Fill background
             ctx.fillStyle = '#f0f8ff';
             ctx.fillRect(0, 0, targetWidth, targetHeight);
             
-            // Draw the resized image
-            ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
+            if (fitMode === 'contain') {
+                // Fit entire image with possible letterboxing
+                if (imgAspect > targetAspect) {
+                    drawWidth = targetWidth;
+                    drawHeight = targetWidth / imgAspect;
+                    offsetX = 0;
+                    offsetY = (targetHeight - drawHeight) / 2;
+                } else {
+                    drawHeight = targetHeight;
+                    drawWidth = targetHeight * imgAspect;
+                    offsetX = (targetWidth - drawWidth) / 2;
+                    offsetY = 0;
+                }
+            } else if (fitMode === 'center') {
+                // Traditional center crop
+                const scale = Math.max(targetWidth / img.width, targetHeight / img.height);
+                drawWidth = img.width * scale;
+                drawHeight = img.height * scale;
+                offsetX = (targetWidth - drawWidth) / 2;
+                offsetY = (targetHeight - drawHeight) / 2;
+            } else if (fitMode === 'top') {
+                // Top-focused crop (good for portraits)
+                if (imgAspect > targetAspect) {
+                    drawHeight = targetHeight;
+                    drawWidth = drawHeight * imgAspect;
+                    offsetY = 0;
+                    offsetX = -(drawWidth - targetWidth) * 0.5; // Center horizontally
+                } else {
+                    drawWidth = targetWidth;
+                    drawHeight = drawWidth / imgAspect;
+                    offsetX = 0;
+                    offsetY = -Math.max(0, (drawHeight - targetHeight) * 0.1); // Keep top 10%
+                }
+            } else {
+                // Smart crop (default improved algorithm)
+                if (Math.abs(imgAspect - targetAspect) < 0.1) {
+                    drawWidth = targetWidth;
+                    drawHeight = targetHeight;
+                    offsetX = 0;
+                    offsetY = 0;
+                } else if (imgAspect > targetAspect) {
+                    drawHeight = targetHeight;
+                    drawWidth = drawHeight * imgAspect;
+                    offsetY = 0;
+                    const cropAmount = drawWidth - targetWidth;
+                    offsetX = -cropAmount * 0.3;
+                } else {
+                    drawWidth = targetWidth;
+                    drawHeight = drawWidth / imgAspect;
+                    offsetX = 0;
+                    const cropAmount = drawHeight - targetHeight;
+                    offsetY = -cropAmount * 0.4;
+                }
+            }
             
-            // Get the resized image as data URL
+            // Add subtle border effect
+            ctx.strokeStyle = '#e0e8f0';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(1, 1, targetWidth - 2, targetHeight - 2);
+            
+            // Draw the image
+            ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+            
             const resizedImageData = canvas.toDataURL('image/jpeg', 0.9);
             
-            // Display the resized image in the card
+            // Display the image
             const imageElement = document.getElementById('cardImage');
             const placeholderImage = document.getElementById('placeholderImage');
             
@@ -74,7 +169,7 @@ function handleImageUpload(event) {
     reader.onload = async function(e) {
         try {
             await resizeAndDisplayImage(e.target.result, true);
-            alert('✅ Image uploaded and resized perfectly for your Pokemon card!');
+            alert('✅ Image uploaded with smart cropping! Use the "📐 Refit Image" button to try different cropping styles.');
         } catch (error) {
             alert('❌ Error processing image. Please try a different file.');
         }
@@ -1157,6 +1252,14 @@ function populateFormWithCard(card) {
 function enterEditModeManual() {
     window.isManualEditMode = true;
     
+    // Remove any existing cancel/edit buttons to prevent duplicates
+    const existingButtons = document.querySelectorAll('button');
+    existingButtons.forEach(button => {
+        if (button.textContent.includes('Cancel Edit') || button.textContent.includes('Back to Collection')) {
+            button.remove();
+        }
+    });
+    
     // Update save button
     const saveButton = document.querySelector('button[onclick="saveCard()"]');
     if (saveButton) {
@@ -1374,6 +1477,14 @@ document.addEventListener('DOMContentLoaded', async function() {
 function enterEditModeFromCollection(card) {
     window.isCollectionEditMode = true;
     window.currentEditingCard = card;
+    
+    // Remove any existing cancel/edit buttons to prevent duplicates
+    const existingButtons = document.querySelectorAll('button');
+    existingButtons.forEach(button => {
+        if (button.textContent.includes('Cancel Edit') || button.textContent.includes('Back to Collection')) {
+            button.remove();
+        }
+    });
     
     // Update save button
     const saveButton = document.querySelector('button[onclick="saveCard()"]');
