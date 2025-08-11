@@ -749,16 +749,16 @@ function updateCard() {
     const type1 = document.getElementById('pokemonType').value;
     let type2 = document.getElementById('pokemonType2').value;
     const description = document.getElementById('pokemonDescription').value || 'A mysterious Pokemon';
-    const hp = document.getElementById('hp').value || 0;
-    const attack = document.getElementById('attack').value || 0;
-    const defense = document.getElementById('defense').value || 0;
+    const hp = parseInt(document.getElementById('hp').value) || 60;
+    const attack = parseInt(document.getElementById('attack').value) || 40;
+    const defense = parseInt(document.getElementById('defense').value) || 30;
     const abilityName = document.getElementById('abilityName').value || 'Special Ability';
     const abilityDescription = document.getElementById('abilityDescription').value || 'An amazing ability!';
     const weakness = document.getElementById('weakness').value;
     const resistance = document.getElementById('resistance').value;
     
     // Validate author field
-    validateAuthor(author);
+    // (Author validation handled below in display section)
     
     // Validate duplicate types - if same type is selected for both, ignore secondary
     if (type1 && type2 && type1 === type2) {
