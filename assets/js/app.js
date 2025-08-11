@@ -520,6 +520,7 @@ async function generatePlaceholderImage() {
 // Get type icon
 function getTypeIcon(type) {
     const icons = {
+        'Normal': '⭕',
         'Electric': '⚡',
         'Fire': '🔥',
         'Water': '💧',

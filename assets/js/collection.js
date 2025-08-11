@@ -115,6 +115,7 @@ function showEmptyCollection() {
 // Format Pokemon types for display
 function formatTypes(type1, type2) {
     const typeEmojis = {
+        'Normal': '⭕',
         'Electric': '⚡',
         'Fire': '🔥',
         'Water': '💧',
