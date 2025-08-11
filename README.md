@@ -68,9 +68,10 @@ poke-card-creator/
 3. **Pokemon Description**: Write a short story about your Pokemon
 
 ### Step 4: Make It Beautiful
-1. **Add a Picture**: Use our AI art maker or upload your own drawing
-2. **See It Live**: Watch your card change as you make it
-3. **Save Your Creation**: Add it to your collection and print it out!
+1. **Add YOUR Artwork**: We encourage you to draw, paint, or create your own Pokemon art! Upload your masterpiece to make it truly yours
+2. **Or Use AI Helpers**: If you prefer, you can use our AI tools to generate artwork
+3. **See It Live**: Watch your card change as you make it
+4. **Save Your Creation**: Add it to your collection and print it out!
 
 ## Managing Your Pokemon Collection
 
@@ -81,10 +82,16 @@ poke-card-creator/
 
 ## Cool AI Features (The Robot Artists!)
 
-- **Free AI Helper**: Creates Pokemon pictures for free (no account needed)
-- **Premium AI Artist**: Even fancier pictures if you have an OpenAI account
-- **Smart Resizing**: All pictures automatically fit perfectly on your cards
-- **Works Offline**: Most features work even without internet!
+**We LOVE your own artwork!** The best Pokemon cards come from YOUR imagination and creativity! Here are all your options:
+
+- **Bring Your Own Art**: Draw, paint, or create your Pokemon however you want - this is what we encourage most!
+- **Upload Any Image**: Take a photo of your drawing, scan it, or use digital art you made
+- **Free AI Helper**: If you want AI assistance, creates Pokemon pictures for free (no account needed)
+- **Premium AI Artist**: Even fancier AI pictures if you have an OpenAI account
+- **Smart Resizing**: All pictures (yours OR AI-made) automatically fit perfectly on your cards
+- **Works Offline**: Upload your own art anytime, even without internet!
+
+**Remember**: The most amazing Pokemon cards are the ones where YOU are the artist! AI is just one tool - your creativity is what makes each card special.
 
 ## Pokemon Type System (Learn the Secrets!)
 
