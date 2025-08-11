@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jellytop Cookie presents: Pokemon Card Creator</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Jellytop Cookie presents: Pokémon Card Creator!</h1>
+            <p>Design and print Pokémon-style cards with authentic layouts—use AI art or upload your own.</p>
+            <nav class="navigation">
+                <a href="index.html" class="nav-link active">🎨 Create Cards</a>
+                <a href="pages/collection.html" class="nav-link">📚 View Collection</a>
+                <a href="pages/about.html" class="nav-link">ℹ️ About</a>
+            </nav>
+        </div>
+        
+        <div class="card-creator">
+            <div class="form-section">
+                <h2>Create Your Pokemon</h2>
+                
+                <div class="form-group">
+                    <label for="pokemonName">Pokemon Name:</label>
+                    <input type="text" id="pokemonName" placeholder="Enter Pokemon name" value="Pikachu">
+                </div>
+                
+                <div class="form-group">
+                    <label for="cardAuthor">Card Author:</label>
+                    <input type="text" id="cardAuthor" placeholder="Enter your name" value="">
+                </div>
+                
+                <div class="form-group">
+                    <label for="pokemonType">Primary Type:</label>
+                    <select id="pokemonType">
+                        <option value="Electric">⚡ Electric</option>
+                        <option value="Fire">🔥 Fire</option>
+                        <option value="Water">💧 Water</option>
+                        <option value="Grass">🌱 Grass</option>
+                        <option value="Ground">🌍 Ground</option>
+                        <option value="Rock">🪨 Rock</option>
+                        <option value="Flying">🪶 Flying</option>
+                        <option value="Fighting">👊 Fighting</option>
+                        <option value="Psychic">🔮 Psychic</option>
+                        <option value="Dark">🌙 Dark</option>
+                        <option value="Steel">⚔️ Steel</option>
+                        <option value="Dragon">🐉 Dragon</option>
+                        <option value="Fairy">🧚 Fairy</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="pokemonType2">Secondary Type (Optional):</label>
+                    <select id="pokemonType2">
+                        <option value="">None</option>
+                        <option value="Electric">⚡ Electric</option>
+                        <option value="Fire">🔥 Fire</option>
+                        <option value="Water">💧 Water</option>
+                        <option value="Grass">🌱 Grass</option>
+                        <option value="Ground">🌍 Ground</option>
+                        <option value="Rock">🪨 Rock</option>
+                        <option value="Flying">🪶 Flying</option>
+                        <option value="Fighting">👊 Fighting</option>
+                        <option value="Psychic">🔮 Psychic</option>
+                        <option value="Dark">🌙 Dark</option>
+                        <option value="Steel">⚔️ Steel</option>
+                        <option value="Dragon">🐉 Dragon</option>
+                        <option value="Fairy">🧚 Fairy</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="pokemonDescription">Pokemon Description:</label>
+                    <textarea id="pokemonDescription" rows="3" placeholder="Describe your Pokemon...">A friendly Electric-type Pokemon that stores electricity in its cheek pouches!</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="openaiApiKey">OpenAI API Key (for DALL-E):</label>
+                    <input type="password" id="openaiApiKey" placeholder="Enter your OpenAI API key for DALL-E image generation">
+                    <small>Use your ChatGPT Plus API key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="imageUpload">Upload Your Own Image:</label>
+                    <input type="file" id="imageUpload" accept="image/*" style="margin-bottom: 10px;">
+                    <small>Upload a custom image for your Pokemon (JPG, PNG, GIF)</small>
+                </div>
+                
+                <button class="button" onclick="generateImageWithDALLE()" style="background: #ff6b6b; margin-right: 10px;">🎨 Generate with DALL-E</button>
+                <button class="button" onclick="generateImageWithHuggingFace()" style="background: #8b5cf6; margin-right: 10px;">🤖 AI Image (Free)</button>
+                
+                <div class="form-group">
+                    <label for="hp">HP (Health Points):</label>
+                    <input type="number" id="hp" min="10" max="200" value="60">
+                </div>
+                
+                <div class="form-group">
+                    <label for="attack">Attack Power:</label>
+                    <input type="number" id="attack" min="10" max="100" value="40">
+                </div>
+                
+                <div class="form-group">
+                    <label for="defense">Defense:</label>
+                    <input type="number" id="defense" min="10" max="100" value="30">
+                </div>
+                
+                <div class="form-group">
+                    <label for="abilityName">Special Ability Name:</label>
+                    <input type="text" id="abilityName" placeholder="Thunder Shock" value="Thunder Shock">
+                </div>
+                
+                <div class="form-group">
+                    <label for="abilityDescription">Ability Description:</label>
+                    <textarea id="abilityDescription" rows="3" placeholder="Describe what this ability does...">Deals 20 damage to the opponent and has a chance to paralyze them!</textarea>
+                </div>
+                
+                <button class="button" onclick="saveCard()" style="background: #4caf50;">💾 Save Pokemon Card</button>
+            </div>
+            
+            <div class="card-preview" id="pokemonCard">
+                <div class="pokemon-hp" id="cardHP">HP 60</div>
+                <h3 id="cardName">Pikachu</h3>
+                <div class="type-display" id="cardTypes">⚡ Electric</div>
+                
+                <div class="pokemon-image-area" id="pokemonImageArea">
+                    <img id="cardImage" src="" alt="Pokemon image" style="display: none;">
+                    <div class="placeholder" id="placeholderImage">🎨 Add an image</div>
+                </div>
+                
+                <div class="description-display" id="cardDescription">A friendly Electric-type Pokemon that stores electricity in its cheek pouches!</div>
+                
+                <div class="attack-section">
+                    <div class="attack-damage" id="cardAttack">40</div>
+                    <div class="attack-name" id="cardAbilityName">Thunder Shock</div>
+                    <div class="attack-description" id="cardAbilityDescription">Deals 20 damage to the opponent and has a chance to paralyze them!</div>
+                </div>
+                
+                <div class="pokemon-stats">
+                    <div class="retreat-cost">
+                        <span>Retreat: ⚡</span>
+                    </div>
+                    <div class="weakness-resistance">
+                        <div class="weakness">
+                            <span>Weakness: 🌍 ×2</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pokemon-rarity">⭐</div>
+                <div class="pokemon-series">Custom Series • DEF <span id="cardDefense">30</span></div>
+                <div class="card-author" id="cardAuthorDisplay">Created by: <span id="cardAuthorName">Unknown</span></div>
+            </div>
+            
+            <div class="save-button-container">
+                <button class="button" onclick="saveCardAsPNG()" style="background: #9c27b0; margin-top: 15px;">📸 Save Card as PNG</button>
+            </div>
+        </div>
+        
+        <div class="collection">
+            <h2>Your Pokemon Collection</h2>
+            <div class="card-grid" id="cardCollection">
+                <!-- Saved cards will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

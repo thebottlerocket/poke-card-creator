@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokemon Card Collection - Jellytop Cookie</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/collection.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Jellytop Cookie presents: Pokémon Card Collection!</h1>
+            <p>Browse and filter through all your created Pokemon cards.</p>
+            <nav class="navigation">
+                <a href="../index.html" class="nav-link">🎨 Create Cards</a>
+                <a href="collection.html" class="nav-link active">📚 View Collection</a>
+                <a href="about.html" class="nav-link">ℹ️ About</a>
+            </nav>
+        </div>
+        
+        <div class="collection-filters">
+            <h2>Filter Your Collection</h2>
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="authorFilter">Filter by Author:</label>
+                    <select id="authorFilter">
+                        <option value="">All Authors</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="typeFilter">Filter by Type:</label>
+                    <select id="typeFilter">
+                        <option value="">All Types</option>
+                        <option value="Electric">⚡ Electric</option>
+                        <option value="Fire">🔥 Fire</option>
+                        <option value="Water">💧 Water</option>
+                        <option value="Grass">🌱 Grass</option>
+                        <option value="Ground">🌍 Ground</option>
+                        <option value="Rock">🪨 Rock</option>
+                        <option value="Flying">🪶 Flying</option>
+                        <option value="Fighting">👊 Fighting</option>
+                        <option value="Psychic">🔮 Psychic</option>
+                        <option value="Dark">🌙 Dark</option>
+                        <option value="Steel">⚔️ Steel</option>
+                        <option value="Dragon">🐉 Dragon</option>
+                        <option value="Fairy">🧚 Fairy</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="searchInput">Search Pokemon:</label>
+                    <input type="text" id="searchInput" placeholder="Search by name...">
+                </div>
+                
+                <button class="button clear-filters" onclick="clearFilters()">🔄 Clear Filters</button>
+            </div>
+        </div>
+        
+        <div class="collection-stats">
+            <div class="stat-card">
+                <span class="stat-number" id="totalCards">0</span>
+                <span class="stat-label">Total Cards</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="uniqueAuthors">0</span>
+                <span class="stat-label">Authors</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="uniqueTypes">0</span>
+                <span class="stat-label">Types Used</span>
+            </div>
+        </div>
+        
+        <div class="collection-grid" id="collectionGrid">
+            <!-- Cards will be dynamically loaded here -->
+        </div>
+        
+        <div class="empty-collection" id="emptyCollection" style="display: none;">
+            <h3>No cards found!</h3>
+            <p>Start creating Pokemon cards to see them here.</p>
+            <a href="../index.html" class="button">🎨 Create Your First Card</a>
+        </div>
+    </div>
+
+    <script src="../assets/js/collection.js"></script>
+</body>
+</html>
