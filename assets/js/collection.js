@@ -1,24 +1,47 @@
 // Collection Page JavaScript
 let allCards = [];
 let filteredCards = [];
+let cardManager = null;
 
 // Load and display all cards when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    loadAllCards();
+document.addEventListener('DOMContentLoaded', async function() {
+    // Initialize card manager
+    if (window.cardManager) {
+        try {
+            await window.cardManager.init();
+            cardManager = window.cardManager;
+            console.log('Collection page: Card manager initialized');
+        } catch (error) {
+            console.error('Failed to initialize card manager:', error);
+        }
+    }
+    
+    await loadAllCards();
     setupFilterListeners();
     updateStats();
 });
 
-// Load all cards from localStorage
-function loadAllCards() {
-    const savedCards = localStorage.getItem('pokemonCards');
-    if (savedCards) {
-        allCards = JSON.parse(savedCards);
+// Load all cards from database or localStorage
+async function loadAllCards() {
+    try {
+        if (cardManager) {
+            allCards = await cardManager.getAllCards();
+        } else {
+            // Fallback to localStorage
+            const savedCards = localStorage.getItem('pokemonCards');
+            allCards = savedCards ? JSON.parse(savedCards) : [];
+        }
+        
         filteredCards = [...allCards];
         displayCards(filteredCards);
         populateAuthorFilter();
         updateStats();
-    } else {
+    } catch (error) {
+        console.error('Error loading cards:', error);
+        showEmptyCollection();
+    }
+    
+    if (allCards.length === 0) {
         showEmptyCollection();
     }
 }
@@ -71,6 +94,7 @@ function displayCards(cards) {
                     <span>ATK: ${card.attack || 40} | DEF: ${card.defense || 30}</span>
                 </div>
                 <div class="card-actions">
+                    <button class="edit-btn" onclick="editCardInCreator(${index})" style="background: linear-gradient(135deg, #ff9800, #f57c00); color: white;">✏️ Edit</button>
                     <button class="view-btn" onclick="viewCard(${index})">👁️ View</button>
                     <button class="delete-btn" onclick="deleteCard(${index})">🗑️ Delete</button>
                 </div>
@@ -230,28 +254,57 @@ function viewCard(index) {
     alert(cardDetails);
 }
 
+// Edit card in the main creator page
+function editCardInCreator(index) {
+    const card = filteredCards[index];
+    if (!card) {
+        alert('❌ Card not found!');
+        return;
+    }
+    
+    // Store the card data in sessionStorage for the main page to pick up
+    sessionStorage.setItem('editCardData', JSON.stringify(card));
+    sessionStorage.setItem('editMode', 'true');
+    
+    // Navigate to the main page
+    window.location.href = '../index.html';
+}
+
 // Delete a specific card
-function deleteCard(index) {
+async function deleteCard(index) {
     const card = filteredCards[index];
     if (!card) return;
     
-    if (confirm(`Are you sure you want to delete "${card.name || 'Unknown Pokemon'}"? This action cannot be undone.`)) {
-        // Find the card in the original allCards array and remove it
-        const originalIndex = allCards.findIndex(c => 
-            c.name === card.name && 
-            c.createdAt === card.createdAt && 
-            c.author === card.author
-        );
-        
-        if (originalIndex !== -1) {
-            allCards.splice(originalIndex, 1);
-            localStorage.setItem('pokemonCards', JSON.stringify(allCards));
+    try {
+        if (cardManager) {
+            await cardManager.deleteCard(card.id);
+        } else {
+            // Fallback to localStorage method
+            if (!confirm(`Are you sure you want to delete "${card.name || 'Unknown Pokemon'}"? This action cannot be undone.`)) {
+                return;
+            }
             
-            // Refresh the display
-            applyFilters();
-            populateAuthorFilter();
+            // Find the card in the original allCards array and remove it
+            const originalIndex = allCards.findIndex(c => 
+                c.name === card.name && 
+                c.createdAt === card.createdAt && 
+                c.author === card.author
+            );
             
-            alert(`"${card.name || 'Unknown Pokemon'}" has been deleted from your collection.`);
+            if (originalIndex !== -1) {
+                allCards.splice(originalIndex, 1);
+                localStorage.setItem('pokemonCards', JSON.stringify(allCards));
+                alert(`"${card.name || 'Unknown Pokemon'}" has been deleted from your collection.`);
+            }
         }
+        
+        // Refresh the display
+        await loadAllCards();
+        applyFilters();
+        populateAuthorFilter();
+        
+    } catch (error) {
+        console.error('Error deleting card:', error);
+        alert('❌ Error deleting card. Please try again.');
     }
 }

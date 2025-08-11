@@ -9,31 +9,79 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1> About Jellytop Cookie's Pokemon Card Creator</h1>
-            <p><a href="../index.html">← Back to Card Creator</a></p>
+            <h1>About Jellytop Cookie's Pokemon Card Creator</h1>
+            <p>Create authentic Pokemon-style trading cards with AI art generation and professional styling</p>
+            <nav class="navigation">
+                <a href="../index.html" class="nav-link">Create Cards</a>
+                <a href="collection.html" class="nav-link">View Collection</a>
+                <a href="about.html" class="nav-link active">About</a>
+            </nav>
         </div>
         
-        <div style="padding: 20px;">
+        <div style="padding: 20px; line-height: 1.6;">
             <h2>About This Project</h2>
-            <p>This is an example page showing how you can extend the Pokemon Card Creator with additional pages.</p>
+            <p>The Pokemon Card Creator is a comprehensive web application that enables users to design and create custom Pokemon-style trading cards with professional layouts and authentic styling. Built with modern web technologies, it offers both AI-powered image generation and manual customization options.</p>
             
-            <h3>Features</h3>
+            <h3>Core Features</h3>
             <ul>
-                <li> AI-powered Pokemon artwork generation</li>
-                <li> Image upload functionality</li>
-                <li> Authentic Pokemon card styling</li>
-                <li> Responsive design</li>
-                <li> Local storage for saved cards</li>
+                <li><strong>AI Image Generation:</strong> Integration with OpenAI DALL-E and Hugging Face APIs for creating unique Pokemon artwork</li>
+                <li><strong>Image Upload:</strong> Support for custom image uploads with automatic resizing and optimization</li>
+                <li><strong>Authentic Styling:</strong> Professional Pokemon card layouts with proper trading card dimensions (2.5" x 3.5")</li>
+                <li><strong>Complete Customization:</strong> Full control over Pokemon stats, types, abilities, and descriptions</li>
+                <li><strong>Dual Type Support:</strong> Support for Pokemon with primary and secondary types</li>
+                <li><strong>Author Attribution:</strong> Track card creators with author fields</li>
+                <li><strong>High-Quality Export:</strong> Export cards as high-resolution PNG files suitable for printing</li>
             </ul>
             
-            <h3>Future Enhancements</h3>
-            <p>Add more pages here for features like:</p>
+            <h3>Advanced Collection Management</h3>
             <ul>
-                <li>Card Gallery</li>
-                <li>Help & Instructions</li>
-                <li>Settings</li>
-                <li>Export Options</li>
+                <li><strong>Database Storage:</strong> Robust IndexedDB implementation for reliable card persistence</li>
+                <li><strong>Search and Filter:</strong> Advanced filtering by author, type, and name search</li>
+                <li><strong>Edit Functionality:</strong> Full CRUD operations - create, read, update, and delete cards</li>
+                <li><strong>Import/Export:</strong> Backup and restore collections via JSON files</li>
+                <li><strong>Statistics:</strong> Collection analytics including total cards, unique authors, and type distribution</li>
+                <li><strong>Cross-Device Support:</strong> Export/import enables sharing between devices</li>
             </ul>
+            
+            <h3>Technical Architecture</h3>
+            <ul>
+                <li><strong>Frontend:</strong> Pure HTML5, CSS3, and JavaScript (no frameworks required)</li>
+                <li><strong>Storage:</strong> IndexedDB for primary storage with localStorage fallback</li>
+                <li><strong>APIs:</strong> OpenAI DALL-E integration for premium AI art generation</li>
+                <li><strong>Backup API:</strong> Hugging Face Stable Diffusion for free AI image generation</li>
+                <li><strong>Image Processing:</strong> Canvas API for image manipulation and resizing</li>
+                <li><strong>Export:</strong> html2canvas library for high-quality PNG generation</li>
+            </ul>
+            
+            <h3>File Structure</h3>
+            <ul>
+                <li><strong>index.html:</strong> Main card creation interface</li>
+                <li><strong>pages/collection.html:</strong> Advanced collection management page</li>
+                <li><strong>assets/css/main.css:</strong> Core styling and card layouts</li>
+                <li><strong>assets/css/collection.css:</strong> Collection page specific styles</li>
+                <li><strong>assets/js/app.js:</strong> Main application logic and card creation</li>
+                <li><strong>assets/js/database.js:</strong> IndexedDB database management</li>
+                <li><strong>assets/js/cardManager.js:</strong> Advanced card CRUD operations</li>
+                <li><strong>assets/js/collection.js:</strong> Collection page functionality</li>
+            </ul>
+            
+            <h3>Supported Pokemon Types</h3>
+            <p>The application supports all major Pokemon types including Electric, Fire, Water, Grass, Ground, Rock, Flying, Fighting, Psychic, Dark, Steel, Dragon, and Fairy types, each with appropriate styling and weakness calculations.</p>
+            
+            <h3>Browser Compatibility</h3>
+            <p>Compatible with all modern web browsers that support HTML5, CSS3, IndexedDB, and Canvas API. Includes fallback mechanisms for browsers with limited IndexedDB support.</p>
+            
+            <h3>Data Privacy</h3>
+            <p>All card data is stored locally in your browser. No personal information is transmitted to external servers except when using AI image generation APIs (OpenAI DALL-E or Hugging Face) where only the image generation prompts are sent.</p>
+            
+            <h3>Future Development</h3>
+            <p>Planned enhancements include additional Pokemon types, template variations, batch operations, advanced search capabilities, and community sharing features.</p>
+            
+            <h3>Credits</h3>
+            <p><strong>Developed by:</strong> Jellytop Cookie<br>
+            <strong>AI Integration:</strong> OpenAI DALL-E, Hugging Face Stable Diffusion<br>
+            <strong>Image Export:</strong> html2canvas library<br>
+            <strong>Inspiration:</strong> Pokemon Trading Card Game design principles</p>
         </div>
     </div>
 </body>

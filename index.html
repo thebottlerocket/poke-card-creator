@@ -6,6 +6,8 @@
     <title>Jellytop Cookie presents: Pokemon Card Creator</title>
     <link rel="stylesheet" href="assets/css/main.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="assets/js/database.js"></script>
+    <script src="assets/js/cardManager.js"></script>
 </head>
 <body>
     <div class="container">
@@ -150,8 +152,7 @@
                 </div>
                 
                 <div class="pokemon-rarity">⭐</div>
-                <div class="pokemon-series">Custom Series • DEF <span id="cardDefense">30</span></div>
-                <div class="card-author" id="cardAuthorDisplay">Created by: <span id="cardAuthorName">Unknown</span></div>
+                <div class="pokemon-series">DEF <span id="cardDefense">30</span> • Created by: <span id="cardAuthorName">Unknown</span></div>
             </div>
             
             <div class="save-button-container">
@@ -161,6 +162,13 @@
         
         <div class="collection">
             <h2>Your Pokemon Collection</h2>
+            <div class="data-management">
+                <h3>📊 Collection Management</h3>
+                <button class="button" onclick="exportCollection()" style="background: #4caf50;">📦 Export Collection</button>
+                <button class="button" onclick="document.getElementById('importFile').click()" style="background: #2196f3;">📥 Import Collection</button>
+                <button class="button" onclick="showStats()" style="background: #ff9800;">📈 View Stats</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importCollection(this.files[0])">
+            </div>
             <div class="card-grid" id="cardCollection">
                 <!-- Saved cards will appear here -->
             </div>

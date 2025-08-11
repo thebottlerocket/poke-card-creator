@@ -569,41 +569,61 @@ function updateCard() {
 }
 
 // Save card to collection
-function saveCard() {
-    const cardData = {
-        id: Date.now(),
-        createdAt: new Date().toISOString(),
-        name: document.getElementById('pokemonName').value || 'Unknown Pokemon',
-        author: document.getElementById('cardAuthor').value || 'Unknown',
-        type1: document.getElementById('pokemonType').value,
-        type2: document.getElementById('pokemonType2').value,
-        description: document.getElementById('pokemonDescription').value || 'A mysterious Pokemon',
-        hp: document.getElementById('hp').value || 0,
-        attack: document.getElementById('attack').value || 0,
-        defense: document.getElementById('defense').value || 0,
-        abilityName: document.getElementById('abilityName').value || 'Special Ability',
-        abilityDescription: document.getElementById('abilityDescription').value || 'An amazing ability!',
-        image: window.currentCardImage
-    };
-    
-    // Get existing cards
-    const existingCards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
-    
-    // Add new card
-    existingCards.push(cardData);
-    
-    // Save to localStorage
-    localStorage.setItem('pokemonCards', JSON.stringify(existingCards));
-    
-    // Refresh collection display
-    displayCollection();
-    
-    alert('🎉 Pokemon card saved to your collection!');
+async function saveCard() {
+    if (window.cardManager) {
+        await window.cardManager.saveCard();
+    } else {
+        // Fallback to old method
+        const cardData = {
+            id: Date.now(),
+            createdAt: new Date().toISOString(),
+            name: document.getElementById('pokemonName').value || 'Unknown Pokemon',
+            author: document.getElementById('cardAuthor').value || 'Unknown',
+            type1: document.getElementById('pokemonType').value,
+            type2: document.getElementById('pokemonType2').value,
+            description: document.getElementById('pokemonDescription').value || 'A mysterious Pokemon',
+            hp: document.getElementById('hp').value || 0,
+            attack: document.getElementById('attack').value || 0,
+            defense: document.getElementById('defense').value || 0,
+            abilityName: document.getElementById('abilityName').value || 'Special Ability',
+            abilityDescription: document.getElementById('abilityDescription').value || 'An amazing ability!',
+            image: window.currentCardImage
+        };
+        
+        // Get existing cards
+        const existingCards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+        
+        // Add new card
+        existingCards.push(cardData);
+        
+        // Save to localStorage
+        localStorage.setItem('pokemonCards', JSON.stringify(existingCards));
+        
+        // Refresh collection display
+        displayCollection();
+        
+        alert('🎉 Pokemon card saved to your collection!');
+    }
 }
 
 // Display saved cards collection
-function displayCollection() {
-    const cards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+async function displayCollection() {
+    let cards = [];
+    
+    // Try to get cards from new database first
+    if (window.cardManager) {
+        try {
+            cards = await window.cardManager.getAllCards();
+        } catch (error) {
+            console.error('Error loading cards from database:', error);
+            // Fallback to localStorage
+            cards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+        }
+    } else {
+        // Fallback to localStorage
+        cards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+    }
+    
     const collection = document.getElementById('cardCollection');
     
     if (cards.length === 0) {
@@ -611,31 +631,410 @@ function displayCollection() {
         return;
     }
     
-    collection.innerHTML = cards.map(card => `
-        <div class="card-item">
+    collection.innerHTML = cards.map((card, index) => {
+        // Ensure card has an ID
+        const cardId = card.id || `card_${index}_${Date.now()}`;
+        
+        return `
+        <div class="card-item" data-card-id="${cardId}" data-card-index="${index}">
             ${card.image ? `<img src="${card.image}" alt="${card.name}">` : `<div style="height: 140px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; color: white; font-size: 16px; border: 2px solid #ffd700;">🎨 No Image</div>`}
             <h4>${card.name}</h4>
+            <p style="font-size: 0.9em; margin: 5px 0; color: #666;">${card.author ? `By: ${card.author}` : ''}</p>
             <p>${getTypeIcon(card.type1)} ${card.type1}${card.type2 ? ' | ' + getTypeIcon(card.type2) + ' ' + card.type2 : ''}</p>
             <div class="stats-mini">
                 HP: ${card.hp} | ATK: ${card.attack} | DEF: ${card.defense}
             </div>
-            <button class="delete-button" onclick="deleteCard(${card.id})">🗑️ Delete</button>
+            <div class="card-actions" style="display: flex; gap: 5px; margin-top: 10px;">
+                <button class="edit-button" onclick="editCardByIndex(${index})" style="background: #ff9800; color: white; border: none; padding: 5px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; flex: 1;">✏️ Edit</button>
+                <button class="delete-button" onclick="deleteCardByIndex(${index})" style="background: #ff4444; color: white; border: none; padding: 5px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; flex: 1;">🗑️ Delete</button>
+            </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // Delete card from collection
-function deleteCard(id) {
-    if (confirm('Are you sure you want to delete this Pokemon card?')) {
-        const cards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
-        const filteredCards = cards.filter(card => card.id !== id);
-        localStorage.setItem('pokemonCards', JSON.stringify(filteredCards));
-        displayCollection();
+async function deleteCard(id) {
+    if (window.cardManager) {
+        await window.cardManager.deleteCard(id);
+    } else {
+        // Fallback to old method
+        if (confirm('Are you sure you want to delete this Pokemon card?')) {
+            const cards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+            const filteredCards = cards.filter(card => card.id !== id);
+            localStorage.setItem('pokemonCards', JSON.stringify(filteredCards));
+            displayCollection();
+        }
     }
 }
 
+// Edit a specific card
+async function editCard(cardId) {
+    if (window.cardManager) {
+        await window.cardManager.loadCardForEdit(cardId);
+    } else {
+        alert('Edit functionality requires the enhanced database system.');
+    }
+}
+
+// Edit card by index (for main page collection)
+async function editCardByIndex(index) {
+    try {
+        let cards = [];
+        
+        // Get cards using the same method as displayCollection
+        if (window.cardManager) {
+            try {
+                cards = await window.cardManager.getAllCards();
+            } catch (error) {
+                console.error('Error loading cards from database:', error);
+                cards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+            }
+        } else {
+            cards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+        }
+        
+        const card = cards[index];
+        if (!card) {
+            alert('❌ Card not found!');
+            return;
+        }
+        
+        if (window.cardManager && card.id) {
+            await window.cardManager.loadCardForEdit(card.id);
+        } else {
+            // Manual edit for cards without proper IDs
+            populateFormWithCard(card);
+            window.currentEditingCardIndex = index;
+            enterEditModeManual();
+        }
+        
+    } catch (error) {
+        console.error('Error editing card:', error);
+        alert('❌ Error loading card for editing.');
+    }
+}
+
+// Delete card by index (for main page collection)
+async function deleteCardByIndex(index) {
+    try {
+        let cards = [];
+        
+        // Get cards using the same method as displayCollection
+        if (window.cardManager) {
+            try {
+                cards = await window.cardManager.getAllCards();
+            } catch (error) {
+                console.error('Error loading cards from database:', error);
+                cards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+            }
+        } else {
+            cards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+        }
+        
+        const card = cards[index];
+        if (!card) {
+            alert('❌ Card not found!');
+            return;
+        }
+        
+        if (window.cardManager && card.id) {
+            await window.cardManager.deleteCard(card.id);
+        } else {
+            // Manual delete for cards without proper IDs
+            if (confirm(`Are you sure you want to delete "${card.name}"? This action cannot be undone.`)) {
+                cards.splice(index, 1);
+                localStorage.setItem('pokemonCards', JSON.stringify(cards));
+                displayCollection();
+                alert(`"${card.name}" has been deleted!`);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error deleting card:', error);
+        alert('❌ Error deleting card.');
+    }
+}
+
+// Export collection to file
+async function exportCollection() {
+    if (window.cardManager) {
+        await window.cardManager.exportCollection();
+    } else {
+        // Fallback export from localStorage
+        const cards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+        const exportData = {
+            exportDate: new Date().toISOString(),
+            cardCount: cards.length,
+            cards: cards
+        };
+        
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        const exportFileDefaultName = `pokemon-cards-${new Date().toISOString().split('T')[0]}.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        
+        alert('📦 Collection exported successfully!');
+    }
+}
+
+// Import collection from file
+async function importCollection(file) {
+    if (!file) return;
+    
+    if (window.cardManager) {
+        await window.cardManager.importCollection(file);
+    } else {
+        try {
+            const text = await file.text();
+            const importData = JSON.parse(text);
+            
+            if (importData.cards && Array.isArray(importData.cards)) {
+                const existingCards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+                const newCards = importData.cards.map(card => ({
+                    ...card,
+                    id: Date.now() + Math.random().toString(36).substr(2, 9),
+                    importedAt: new Date().toISOString()
+                }));
+                
+                const allCards = [...existingCards, ...newCards];
+                localStorage.setItem('pokemonCards', JSON.stringify(allCards));
+                
+                displayCollection();
+                alert(`✅ Imported ${newCards.length} cards successfully!`);
+            } else {
+                alert('❌ Invalid file format. Please select a valid Pokemon card collection file.');
+            }
+        } catch (error) {
+            console.error('Import error:', error);
+            alert('❌ Error importing collection. Please check the file format.');
+        }
+    }
+}
+
+// Show collection statistics
+async function showStats() {
+    if (window.cardManager) {
+        try {
+            const stats = await window.cardManager.getStats();
+            const message = `📊 Collection Statistics:
+
+🎴 Total Cards: ${stats.totalCards}
+👥 Unique Authors: ${stats.uniqueAuthors}
+🎯 Types Used: ${stats.uniqueTypes}
+
+📋 Authors: ${stats.authors.join(', ') || 'None'}
+🔥 Types: ${stats.types.join(', ') || 'None'}
+
+${stats.oldestCard ? `📅 Oldest Card: ${stats.oldestCard.name} (${new Date(stats.oldestCard.createdAt).toLocaleDateString()})` : ''}
+${stats.newestCard ? `📅 Newest Card: ${stats.newestCard.name} (${new Date(stats.newestCard.createdAt).toLocaleDateString()})` : ''}`;
+            
+            alert(message);
+        } catch (error) {
+            console.error('Error getting stats:', error);
+            alert('❌ Error loading statistics.');
+        }
+    } else {
+        // Fallback stats from localStorage
+        const cards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+        const authors = [...new Set(cards.map(card => card.author).filter(Boolean))];
+        const types = [...new Set(cards.flatMap(card => [card.type1, card.type2].filter(Boolean)))];
+        
+        const message = `📊 Collection Statistics:
+
+🎴 Total Cards: ${cards.length}
+👥 Unique Authors: ${authors.length}
+🎯 Types Used: ${types.length}
+
+📋 Authors: ${authors.join(', ') || 'None'}
+🔥 Types: ${types.join(', ') || 'None'}`;
+        
+        alert(message);
+    }
+}
+
+// Helper function to populate form with card data
+function populateFormWithCard(card) {
+    document.getElementById('pokemonName').value = card.name || '';
+    document.getElementById('cardAuthor').value = card.author || '';
+    document.getElementById('pokemonType').value = card.type1 || 'Electric';
+    document.getElementById('pokemonType2').value = card.type2 || '';
+    document.getElementById('pokemonDescription').value = card.description || '';
+    document.getElementById('hp').value = card.hp || 60;
+    document.getElementById('attack').value = card.attack || 40;
+    document.getElementById('defense').value = card.defense || 30;
+    document.getElementById('abilityName').value = card.abilityName || '';
+    document.getElementById('abilityDescription').value = card.abilityDescription || '';
+    
+    // Load image
+    if (card.image) {
+        window.currentCardImage = card.image;
+        const imageElement = document.getElementById('cardImage');
+        const placeholderImage = document.getElementById('placeholderImage');
+        
+        imageElement.src = card.image;
+        imageElement.style.display = 'block';
+        placeholderImage.style.display = 'none';
+    }
+    
+    // Update card preview
+    updateCard();
+}
+
+// Manual edit mode for cards without proper database integration
+function enterEditModeManual() {
+    window.isManualEditMode = true;
+    
+    // Update save button
+    const saveButton = document.querySelector('button[onclick="saveCard()"]');
+    if (saveButton) {
+        saveButton.textContent = '✏️ Update Pokemon Card';
+        saveButton.style.background = '#ff9800';
+        saveButton.onclick = updateCardManual;
+    }
+    
+    // Add cancel button
+    const cancelButton = document.createElement('button');
+    cancelButton.className = 'button';
+    cancelButton.textContent = '❌ Cancel Edit';
+    cancelButton.style.background = '#f44336';
+    cancelButton.style.marginLeft = '10px';
+    cancelButton.onclick = exitEditModeManual;
+    
+    saveButton.parentNode.insertBefore(cancelButton, saveButton.nextSibling);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    alert('✏️ Edit mode: Make your changes and click Update!');
+}
+
+// Update card manually (for localStorage cards)
+function updateCardManual() {
+    if (window.currentEditingCardIndex === undefined) {
+        alert('❌ No card selected for editing.');
+        return;
+    }
+    
+    const cards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+    const cardIndex = window.currentEditingCardIndex;
+    
+    if (cardIndex >= 0 && cardIndex < cards.length) {
+        // Update the card with new data
+        cards[cardIndex] = {
+            ...cards[cardIndex],
+            name: document.getElementById('pokemonName').value || 'Unknown Pokemon',
+            author: document.getElementById('cardAuthor').value || 'Unknown',
+            type1: document.getElementById('pokemonType').value,
+            type2: document.getElementById('pokemonType2').value,
+            description: document.getElementById('pokemonDescription').value || 'A mysterious Pokemon',
+            hp: parseInt(document.getElementById('hp').value) || 60,
+            attack: parseInt(document.getElementById('attack').value) || 40,
+            defense: parseInt(document.getElementById('defense').value) || 30,
+            abilityName: document.getElementById('abilityName').value || 'Special Ability',
+            abilityDescription: document.getElementById('abilityDescription').value || 'An amazing ability!',
+            image: window.currentCardImage,
+            updatedAt: new Date().toISOString()
+        };
+        
+        localStorage.setItem('pokemonCards', JSON.stringify(cards));
+        displayCollection();
+        exitEditModeManual();
+        alert('🎉 Card updated successfully!');
+    } else {
+        alert('❌ Error: Card not found.');
+    }
+}
+
+// Exit manual edit mode
+function exitEditModeManual() {
+    window.isManualEditMode = false;
+    window.currentEditingCardIndex = undefined;
+    
+    // Reset save button
+    const saveButton = document.querySelector('button[onclick*="updateCardManual"], button[onclick="saveCard()"]');
+    if (saveButton) {
+        saveButton.textContent = '💾 Save Pokemon Card';
+        saveButton.style.background = '#4caf50';
+        saveButton.onclick = saveCard;
+    }
+    
+    // Remove cancel button
+    const cancelButton = saveButton.parentNode.querySelector('button[onclick*="exitEditModeManual"]');
+    if (cancelButton) {
+        cancelButton.remove();
+    }
+    
+    // Clear form
+    clearFormToDefaults();
+}
+
+// Clear form to default values
+function clearFormToDefaults() {
+    document.getElementById('pokemonName').value = 'Pikachu';
+    document.getElementById('cardAuthor').value = '';
+    document.getElementById('pokemonType').value = 'Electric';
+    document.getElementById('pokemonType2').value = '';
+    document.getElementById('pokemonDescription').value = 'A friendly Electric-type Pokemon that stores electricity in its cheek pouches!';
+    document.getElementById('hp').value = 60;
+    document.getElementById('attack').value = 40;
+    document.getElementById('defense').value = 30;
+    document.getElementById('abilityName').value = 'Thunder Shock';
+    document.getElementById('abilityDescription').value = 'Deals 20 damage to the opponent and has a chance to paralyze them!';
+    
+    // Clear image
+    window.currentCardImage = null;
+    const imageElement = document.getElementById('cardImage');
+    const placeholderImage = document.getElementById('placeholderImage');
+    
+    imageElement.style.display = 'none';
+    placeholderImage.style.display = 'block';
+    
+    updateCard();
+}
+
 // Initialize the application
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Initialize the enhanced card management system
+    if (window.cardManager) {
+        try {
+            await window.cardManager.init();
+            console.log('Enhanced card management system initialized');
+        } catch (error) {
+            console.error('Failed to initialize card management system:', error);
+        }
+    }
+    
+    // Check if we need to load a card for editing (from collection page)
+    const editCardData = sessionStorage.getItem('editCardData');
+    const editMode = sessionStorage.getItem('editMode');
+    
+    if (editCardData && editMode === 'true') {
+        try {
+            const card = JSON.parse(editCardData);
+            // Clear session storage
+            sessionStorage.removeItem('editCardData');
+            sessionStorage.removeItem('editMode');
+            
+            // Load the card for editing
+            setTimeout(() => {
+                populateFormWithCard(card);
+                enterEditModeFromCollection(card);
+                // Scroll to top to show the form
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 100);
+        } catch (error) {
+            console.error('Error loading card for editing:', error);
+            sessionStorage.removeItem('editCardData');
+            sessionStorage.removeItem('editMode');
+        }
+    }
+    
     const inputs = ['pokemonName', 'cardAuthor', 'pokemonType', 'pokemonType2', 'pokemonDescription', 'hp', 'attack', 'defense', 'abilityName', 'abilityDescription'];
     inputs.forEach(id => {
         const element = document.getElementById(id);
@@ -663,3 +1062,167 @@ document.addEventListener('DOMContentLoaded', function() {
     updateCard();
     displayCollection();
 });
+
+// Enter edit mode when coming from collection page
+function enterEditModeFromCollection(card) {
+    window.isCollectionEditMode = true;
+    window.currentEditingCard = card;
+    
+    // Update save button
+    const saveButton = document.querySelector('button[onclick="saveCard()"]');
+    if (saveButton) {
+        saveButton.textContent = '✏️ Update Pokemon Card';
+        saveButton.style.background = '#ff9800';
+        saveButton.onclick = updateCardFromCollection;
+    }
+    
+    // Add cancel and back buttons
+    const buttonContainer = saveButton.parentNode;
+    
+    // Cancel button
+    const cancelButton = document.createElement('button');
+    cancelButton.className = 'button';
+    cancelButton.textContent = '❌ Cancel Edit';
+    cancelButton.style.background = '#f44336';
+    cancelButton.style.marginLeft = '10px';
+    cancelButton.onclick = exitCollectionEditMode;
+    
+    // Back to collection button
+    const backButton = document.createElement('button');
+    backButton.className = 'button';
+    backButton.textContent = '📚 Back to Collection';
+    backButton.style.background = '#2196f3';
+    backButton.style.marginLeft = '10px';
+    backButton.onclick = () => window.location.href = 'pages/collection.html';
+    
+    buttonContainer.appendChild(cancelButton);
+    buttonContainer.appendChild(backButton);
+    
+    // Show notification
+    showEditNotification('✏️ Editing card from collection. Make your changes and click Update!');
+}
+
+// Update card when editing from collection
+async function updateCardFromCollection() {
+    if (!window.currentEditingCard) {
+        alert('❌ No card selected for editing.');
+        return;
+    }
+    
+    try {
+        const updatedCardData = {
+            ...window.currentEditingCard,
+            name: document.getElementById('pokemonName').value || 'Unknown Pokemon',
+            author: document.getElementById('cardAuthor').value || 'Unknown',
+            type1: document.getElementById('pokemonType').value,
+            type2: document.getElementById('pokemonType2').value,
+            description: document.getElementById('pokemonDescription').value || 'A mysterious Pokemon',
+            hp: parseInt(document.getElementById('hp').value) || 60,
+            attack: parseInt(document.getElementById('attack').value) || 40,
+            defense: parseInt(document.getElementById('defense').value) || 30,
+            abilityName: document.getElementById('abilityName').value || 'Special Ability',
+            abilityDescription: document.getElementById('abilityDescription').value || 'An amazing ability!',
+            image: window.currentCardImage,
+            updatedAt: new Date().toISOString()
+        };
+        
+        // Try to update using card manager first
+        if (window.cardManager && updatedCardData.id) {
+            await window.cardManager.updateCard(updatedCardData);
+        } else {
+            // Fallback to localStorage update
+            const cards = JSON.parse(localStorage.getItem('pokemonCards') || '[]');
+            const cardIndex = cards.findIndex(c => 
+                c.id === updatedCardData.id || 
+                (c.name === window.currentEditingCard.name && 
+                 c.createdAt === window.currentEditingCard.createdAt)
+            );
+            
+            if (cardIndex !== -1) {
+                cards[cardIndex] = updatedCardData;
+                localStorage.setItem('pokemonCards', JSON.stringify(cards));
+            }
+        }
+        
+        showEditNotification('🎉 Card updated successfully! Redirecting to collection...', 'success');
+        
+        // Redirect back to collection page after a short delay
+        setTimeout(() => {
+            window.location.href = 'pages/collection.html';
+        }, 1500);
+        
+    } catch (error) {
+        console.error('Error updating card:', error);
+        showEditNotification('❌ Error updating card. Please try again.', 'error');
+    }
+}
+
+// Exit collection edit mode
+function exitCollectionEditMode() {
+    window.isCollectionEditMode = false;
+    window.currentEditingCard = null;
+    
+    // Reset save button
+    const saveButton = document.querySelector('button[onclick*="updateCardFromCollection"], button[onclick="saveCard()"]');
+    if (saveButton) {
+        saveButton.textContent = '💾 Save Pokemon Card';
+        saveButton.style.background = '#4caf50';
+        saveButton.onclick = saveCard;
+    }
+    
+    // Remove added buttons
+    const buttonContainer = saveButton.parentNode;
+    const cancelButton = buttonContainer.querySelector('button[onclick*="exitCollectionEditMode"]');
+    const backButton = buttonContainer.querySelector('button[onclick*="collection.html"]');
+    
+    if (cancelButton) cancelButton.remove();
+    if (backButton) backButton.remove();
+    
+    // Clear form
+    clearFormToDefaults();
+    
+    // Navigate back to collection
+    window.location.href = 'pages/collection.html';
+}
+
+// Show edit notification
+function showEditNotification(message, type = 'info') {
+    // Remove any existing notifications
+    const existingNotification = document.querySelector('.edit-notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    // Create notification
+    const notification = document.createElement('div');
+    notification.className = `edit-notification notification-${type}`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        z-index: 1000;
+        max-width: 400px;
+        font-weight: 500;
+        color: white;
+        animation: slideIn 0.3s ease-out;
+        ${type === 'success' ? 'background: linear-gradient(135deg, #4caf50, #45a049);' : 
+          type === 'error' ? 'background: linear-gradient(135deg, #f44336, #d32f2f);' : 
+          'background: linear-gradient(135deg, #2196f3, #1976d2);'}
+    `;
+    notification.innerHTML = `
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; font-size: 18px; font-weight: bold; cursor: pointer; margin-left: 10px; padding: 0; width: 25px; height: 25px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">×</button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}

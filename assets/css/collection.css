@@ -256,6 +256,11 @@
     transition: all 0.3s ease;
 }
 
+.edit-btn {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    color: white;
+}
+
 .view-btn {
     background: linear-gradient(135deg, #4facfe, #00f2fe);
     color: white;
@@ -266,7 +271,7 @@
     color: white;
 }
 
-.view-btn:hover, .delete-btn:hover {
+.edit-btn:hover, .view-btn:hover, .delete-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
